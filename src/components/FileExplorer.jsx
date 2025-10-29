@@ -176,92 +176,102 @@ function App() {
   };
 
   const [data, setData] = useState(defaultData);
-  const [selectedItem, setSelectedItem] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  const getParentNodeId = (tree, childId, parentId = null) => {
-    for (const node of tree) {
-      if (node.id === childId) {
-        return parentId;
-      }
-      if (node.children && node.children.length > 0) {
-        console.log("all", childId, node.id, node.children);
+  const generateRandomString = (length = 6) =>
+    Math.random()
+      .toString(36)
+      .slice(2, 2 + length);
 
-        const foundParentId = getParentNodeId(node.children, childId, node.id);
-        if (foundParentId !== null) {
-          return foundParentId;
-        }
+  const findNodeById = (node, id) => {
+    if (node.id === id) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findNodeById(child, id);
+        if (found) return found;
       }
     }
     return null;
   };
 
-  const generateRandomString = (length = 6) => {
-    return Math.random()
-      .toString(36)
-      .slice(2, 2 + length);
+  const findParentId = (node, childId, parentId = null) => {
+    if (node.id === childId) return parentId;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findParentId(child, childId, node.id);
+        if (found) return found;
+      }
+    }
+    return null;
   };
 
-  const addFile = async () => {
-    const name = generateRandomString() + ".xyz";
-    console.log("selected item", selectedItem);
-
-    let newData = JSON.parse(JSON.stringify(data));
-    const selectedItemData = newData.children.filter(
-      (node) => node.id == selectedItem
-    );
-    console.log("selectedItemData", selectedItemData);
-
-    if (selectedItemData.type == "file") {
-      const parentId = await getParentNodeId(data.children, selectedItem, null);
-      setSelectedItem(parentId);
+  const addChildToNode = (node, id, newChild) => {
+    if (node.id === id) {
+      return {
+        ...node,
+        children: [...(node.children || []), newChild]
+      };
     }
+    if (node.children) {
+      return {
+        ...node,
+        children: node.children.map((child) =>
+          addChildToNode(child, id, newChild)
+        )
+      };
+    }
+    return node;
+  };
 
-    newData.children = newData.children.filter((node) => {
-      if (node.id == selectedItem) {
-        node.children.push({
-          id: Math.floor(Math.random() * 1000000000),
-          label: name,
-          type: "file"
-        });
-      }
-      return node;
-    });
+  const addFile = () => {
+    const name = generateRandomString() + ".xyz";
+    const selectedNode = findNodeById(data, selectedItem);
 
-    setData(newData);
-    console.log("newData ->", newData);
+    const targetId =
+      selectedNode?.type === "file"
+        ? findParentId(data, selectedItem)
+        : selectedItem;
+
+    const newFile = {
+      id: Date.now(),
+      label: name,
+      type: "file",
+      content: "Sample content for " + name
+    };
+
+    const updatedTree = addChildToNode(data, targetId, newFile);
+    setData(updatedTree);
   };
 
   const addFolder = () => {
     const name = generateRandomString(8);
+    const selectedNode = findNodeById(data, selectedItem);
 
-    let newData = JSON.parse(JSON.stringify(data));
+    const targetId =
+      selectedNode?.type === "file"
+        ? findParentId(data, selectedItem)
+        : selectedItem;
 
-    newData.children = newData.children.filter((node) => {
-      if (node.id == selectedItem) {
-        node.children.push({
-          id: Math.floor(Math.random() * 1000000000),
-          label: name,
-          type: "folder",
-          children: []
-        });
-      }
-      return node;
-    });
+    const newFolder = {
+      id: Date.now(),
+      label: name,
+      type: "folder",
+      children: []
+    };
 
-    setData(newData);
-    console.log("newData ->", newData);
+    const updatedTree = addChildToNode(data, targetId, newFolder);
+    setData(updatedTree);
   };
 
   const handleItemSelect = (event, nodeId) => {
-    console.log("nodeId=>", nodeId);
-
-    setSelectedItem(nodeId);
+    setSelectedItem(Number(nodeId));
   };
 
   const renderTreeItems = (nodes) => {
+    if (!nodes) return null;
     return nodes.map((node) => (
       <TreeItem itemId={node.id} key={node.id} label={node.label}>
-        {Array.isArray(node.children) ? renderTreeItems(node.children) : null}
+        {renderTreeItems(node.children)}
       </TreeItem>
     ));
   };
@@ -269,21 +279,19 @@ function App() {
   return (
     <>
       <div className="flex flex-row gap-2">
-        <span className="text-lg font-bold">Menu</span>
         <div>
           <button onClick={addFile}>File</button>
           <button onClick={addFolder}>Folder</button>
         </div>
       </div>
 
-      {data.children.length > 0 && (
-        <SimpleTreeView
-          selectedItems={selectedItem}
-          onSelectedItemsChange={handleItemSelect}
-        >
-          {renderTreeItems(data.children)}
-        </SimpleTreeView>
-      )}
+      <SimpleTreeView
+        selectedItems={selectedItem}
+        onSelectedItemsChange={handleItemSelect}
+        defaultExpandedItems={["1"]}
+      >
+        {renderTreeItems([data])}
+      </SimpleTreeView>
     </>
   );
 }
