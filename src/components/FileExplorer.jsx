@@ -2,6 +2,7 @@ import { useState } from "react";
 import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
+import { FileIcon, FolderPlus } from "lucide-react";
 
 function App() {
   const defaultData = {
@@ -278,20 +279,85 @@ function App() {
 
   return (
     <>
-      <div className="flex flex-row gap-2">
-        <div>
-          <button onClick={addFile}>File</button>
-          <button onClick={addFolder}>Folder</button>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "8px",
+          padding: "10px 16px",
+          backgroundColor: "#f8f9fa",
+          borderBottom: "1px solid #e0e0e0",
+          borderRadius: "8px 8px 0 0",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.08)"
+        }}
+      >
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={addFile}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              backgroundColor: "#1976d2",
+              color: "#fff",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: 500,
+              fontSize: "14px",
+              transition: "background-color 0.2s ease, transform 0.1s ease"
+            }}
+          >
+            <FileIcon size={16} />
+            Add File
+          </button>
+
+          <button
+            onClick={addFolder}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              backgroundColor: "#2e7d32",
+              color: "#fff",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: 500,
+              fontSize: "14px",
+              transition: "background-color 0.2s ease, transform 0.1s ease"
+            }}
+          >
+            <FolderPlus size={16} />
+            Add Folder
+          </button>
         </div>
       </div>
 
-      <SimpleTreeView
-        selectedItems={selectedItem}
-        onSelectedItemsChange={handleItemSelect}
-        defaultExpandedItems={["1"]}
+      <div
+        style={{
+          border: "1px solid #e0e0e0",
+          borderTop: "none",
+          borderRadius: "0 0 8px 8px",
+          padding: "10px 16px",
+          backgroundColor: "#fff",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+          marginTop: "8px",
+          transition: "all 0.3s ease"
+        }}
       >
-        {renderTreeItems([data])}
-      </SimpleTreeView>
+        <SimpleTreeView
+          selectedItems={selectedItem}
+          onSelectedItemsChange={handleItemSelect}
+          defaultExpandedItems={["1"]}
+        >
+          {renderTreeItems([data])}
+        </SimpleTreeView>
+      </div>
     </>
   );
 }
